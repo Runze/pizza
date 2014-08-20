@@ -81,13 +81,13 @@ save(dtm, file = 'dtm.RData')
 #trim dtm based on tf-idf
 #calculate tf as the average of the % term frequency within each document
 tf = tapply(dtm$v / row_sums(dtm)[dtm$i], dtm$j, mean)
-#calculate idf as log2(the total number of documents / term frequency for each term)
+#calculate idf as log2(the total number of documents / each term's frequency across all documents)
 idf = log2(nDocs(dtm) / col_sums(dtm > 0))
 
-tf_idf = tf / idf
+tf_idf = tf * idf
 
 #only keep terms that have a tf-idf >= the median
-dtm_trim = dtm[, tf_idf >= median(tf_idf)]
+dtm_trim = dtm[, tf_idf >= quantile(tf_idf, .25)]
 trim_ind = which(row_sums(dtm_trim) > 0)
 dtm_trim = dtm_trim[trim_ind, ]
 save(dtm_trim, file = 'dtm_trim.RData')
@@ -117,17 +117,24 @@ for (i in 1:length(f)) {
 names(lda_eval) = c('fold', 'topic', 'perplex')
 pp = ggplot(lda_eval, aes(x = topic, y = perplex, colour = as.factor(fold), group = as.factor(fold))) + geom_line()
 ggsave(pp, file = 'perplex.jpg')
-#2 appears to be the best split...
-#regardless, let's see what the 2 topics look like
+
+sink('lda.txt')
+ddply(lda_eval, .(fold), summarize, min_p = min(perplex), min_t = topic[which.min(perplex)])
+sink()
+#10 appears to be the best split
+
 set.seed(2014)
-lda_m = LDA(dtm_trim, 2)
+lda_m = LDA(dtm_trim, 10)
 lda_topics = posterior(lda_m)$topics
 lda_terms = posterior(lda_m)$terms
 
 #word cloud
 words = names(lda_terms[1, ])
-wordcloud(words, lda_terms[1, ], max.words = 200, random.order = F, col = brewer.pal(8, "Dark2"))
-wordcloud(words, lda_terms[2, ], max.words = 200, random.order = F, col = brewer.pal(8, "Dark2"))
+for (i in 1:10) {
+  png(paste0('lda', i, '.png'), width = 400, height = 400)
+  wordcloud(words, lda_terms[i, ], max.words = 200, random.order = F, col = brewer.pal(8, "Dark2"))
+  dev.off()
+}
 
 #try sk-means
 set.seed(2014)
