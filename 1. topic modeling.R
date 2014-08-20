@@ -86,7 +86,7 @@ idf = log2(nDocs(dtm) / col_sums(dtm > 0))
 
 tf_idf = tf * idf
 
-#only keep terms that have a tf-idf >= the median
+#only keep terms that have a tf-idf >= the 25th percentile
 dtm_trim = dtm[, tf_idf >= quantile(tf_idf, .25)]
 trim_ind = which(row_sums(dtm_trim) > 0)
 dtm_trim = dtm_trim[trim_ind, ]
