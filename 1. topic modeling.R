@@ -107,8 +107,7 @@ for (i in 1:length(f)) {
     dtm_train = dtm_trim[-f[[i]], ]
     dtm_test = dtm_trim[f[[i]], ]
     
-    set.seed(2014)
-    lda_train = LDA(dtm_train, k)
+    lda_train = LDA(dtm_train, k, control = list(seed = 2014))
     lda_test = LDA(dtm_test, model = lda_train)
     
     lda_eval = rbind(lda_eval, c(i, k, perplexity(lda_test)))
@@ -123,8 +122,7 @@ ddply(lda_eval, .(fold), summarize, min_p = min(perplex), min_t = topic[which.mi
 sink()
 #10 appears to be the best split
 
-set.seed(2014)
-lda_m = LDA(dtm_trim, 10)
+lda_m = LDA(dtm_trim, 10, control = list(seed = 2014))
 lda_topics = posterior(lda_m)$topics
 lda_terms = posterior(lda_m)$terms
 
